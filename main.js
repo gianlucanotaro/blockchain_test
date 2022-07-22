@@ -1,46 +1,17 @@
-const {Blockchain, Transactions} = require('./blockchain');
-const SHA256 = require('crypto-js/sha256');
+const {Blockchain, Transactions} = require('./src/blockchain');
+const EC = require('elliptic').ec;
+const ec = new EC('secp256k1');
 
-class Transactions{
-    constructor(fromAddress, toAddress, amount){
-        this.fromAddress = fromAddress;
-        this.toAddress = toAddress;
-        this.amount = amount;
-    }
-}
-
-class Block {
-    constructor(timestamp, transactions, previousHash = '') {
-        this.timestamp = timestamp;
-        this.transactions = transactions;
-        this.previousHash = previousHash;
-        this.hash = this.calculateHash();
-        this.nonce = 0;
-    }
-
-    calculateHash() {
-        return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + this.nonce).toString();
-    }
-
-    mineBlock(difficulty) {
-        while (this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")) {
-            this.nonce++;
-            this.hash = this.calculateHash();
-        }
-
-        console.log("Block mined: " + this.hash);
-    }
-}
-
+const myKey = ec.genKeyPair('f114bacab582dd33d2d80b0b6b9b5dfed6fbcbdc6389cb8cc80e49c09cfebe46');
+const myWalletAddress = myKey.getPublic('hex');
 
 let blockchain = new Blockchain();
-blockchain.createTransaction(new Transactions("address1", "address2", 100));
-blockchain.createTransaction(new Transactions("address2", "address1", 50));
+
+const tx1 = new Transactions(myWalletAddress, 'public key', 5);
+tx1.signTransaction(myKey);
+blockchain.addTransaction(tx1);
 
 console.log("\nStarting the miner...");
-blockchain.minePendingTransactions("blockchain-miner-address");
+blockchain.minePendingTransactions(myWalletAddress);
 
-console.log('\n Restarting the miner...');
-blockchain.minePendingTransactions("blockchain-miner-address");
-
-console.log("\nBalance of blockchain-miner-address is: " + blockchain.getBalanceOfAddress("blockchain-miner-address"));
+console.log("\nBalance of blockchain-miner-address is: " + blockchain.getBalanceOfAddress(myWalletAddress));
