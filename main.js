@@ -13,11 +13,21 @@ class Block {
     calculateHash() {
         return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + this.nonce).toString();
     }
+
+    mineBlock(difficulty) {
+        while (this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")) {
+            this.nonce++;
+            this.hash = this.calculateHash();
+        }
+
+        console.log("Block mined: " + this.hash);
+    }
 }
 
 class Blockchain{
     constructor() {
         this.chain = [this.createGenesisBlock()];
+        this.difficulty = 5;
     }
 
     createGenesisBlock() {
@@ -30,20 +40,30 @@ class Blockchain{
 
     addBlock(newBlock) {
         newBlock.previousHash = this.getLatestBlock().hash;
-        newBlock.hash = newBlock.calculateHash();
+        newBlock.mineBlock(this.difficulty);
         this.chain.push(newBlock);
+    }
+
+
+    isChainValid() {
+        for (let i = 1; i < this.chain.length; i++) {
+            const currentBlock = this.chain[i];
+            const previousBlock = this.chain[i - 1];
+            if (currentBlock.hash !== currentBlock.calculateHash()) {
+                return false;
+            }
+            if (currentBlock.previousHash !== previousBlock.hash) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }
 
 
 let blockchain = new Blockchain();
+console.log("Mining block 1...");
 blockchain.addBlock(new Block(1, "01/01/2022", {amount: 4}));
+console.log("Mining block 2...");
 blockchain.addBlock(new Block(2, "01/01/2022", {amount: 10}));
-blockchain.addBlock(new Block(3, "01/01/2022", {amount: 20}));
-blockchain.addBlock(new Block(4, "01/01/2022", {amount: 40}));
-blockchain.addBlock(new Block(5, "01/01/2022", {amount: 80}));
-blockchain.addBlock(new Block(6, "01/01/2022", {amount: 160}));
-blockchain.addBlock(new Block(7, "01/01/2022", {amount: 320}));
-
-console.log(JSON.stringify(blockchain, null, 4));
